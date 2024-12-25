@@ -4,70 +4,68 @@ const dummyResearchData = [
   {
     id: 1,
     title: "Quantum Computing: A New Era of Computational Power",
-    summary: "This groundbreaking research explores the potential of quantum computing in solving complex mathematical problems. The study demonstrates a 100x improvement in processing speed for specific algorithms compared to classical computers.",
-    pdfUrl: "#"
+    summary:
+      "This groundbreaking research explores the potential of quantum computing in solving complex mathematical problems. The study demonstrates a 100x improvement in processing speed for specific algorithms compared to classical computers. It also highlights the challenges of building stable qubits and discusses possible solutions.",
+    pdfUrl: "#",
   },
   {
     id: 2,
     title: "Neural Networks in Climate Prediction",
-    summary: "A comprehensive analysis of deep learning applications in climate modeling, showing how neural networks can improve weather prediction accuracy by up to 45% compared to traditional methods.",
-    pdfUrl: "#"
+    summary:
+      "A comprehensive analysis of deep learning applications in climate modeling. This study illustrates how neural networks can improve weather prediction accuracy by up to 45% compared to traditional methods. It also examines the integration of big data to model long-term climate trends with unprecedented precision.",
+    pdfUrl: "#",
   },
   {
     id: 3,
     title: "Sustainable Energy Storage Solutions",
-    summary: "This paper presents a novel approach to energy storage using organic compounds, potentially reducing battery production costs by 60% while increasing capacity by 40%.",
-    pdfUrl: "#"
+    summary:
+      "This paper presents a novel approach to energy storage using organic compounds. The study finds that this method could potentially reduce battery production costs by 60% while increasing energy capacity by 40%. Insights into its scalability and environmental impact are also discussed.",
+    pdfUrl: "#",
   },
   {
     id: 4,
     title: "Artificial Intelligence in Medical Diagnosis",
-    summary: "An innovative study showing how AI-powered diagnostic tools achieved a 95% accuracy rate in early cancer detection, potentially revolutionizing preventive healthcare.",
-    pdfUrl: "#"
+    summary:
+      "Exploring the application of AI in healthcare, this paper demonstrates how machine learning models can detect diseases such as cancer with an accuracy of over 90%. The study also investigates ethical considerations and the need for explainable AI in clinical decision-making.",
+    pdfUrl: "#",
   },
   {
     id: 5,
-    title: "Blockchain Technology in Supply Chain Management",
-    summary: "Research demonstrating how blockchain implementation reduced supply chain inefficiencies by 75% and improved traceability in pharmaceutical distribution.",
-    pdfUrl: "#"
+    title: "Advancements in Autonomous Vehicles",
+    summary:
+      "This research focuses on recent developments in self-driving technology. The study highlights improvements in LiDAR systems and real-time data processing, which have reduced accident rates by 35%. It also addresses regulatory challenges and public acceptance of autonomous vehicles.",
+    pdfUrl: "#",
   },
   {
     id: 6,
-    title: "Advanced Materials for Space Exploration",
-    summary: "A detailed analysis of new composite materials that can withstand extreme space conditions while reducing spacecraft weight by 30%.",
-    pdfUrl: "#"
+    title: "CRISPR: Revolutionizing Genetic Engineering",
+    summary:
+      "An in-depth examination of CRISPR technology and its potential to treat genetic disorders. The paper delves into case studies where CRISPR has been used successfully in gene therapy and discusses ethical concerns and possible off-target effects.",
+    pdfUrl: "#",
   },
   {
     id: 7,
-    title: "Machine Learning in Financial Markets",
-    summary: "This study reveals how machine learning algorithms predicted market trends with 85% accuracy, offering new insights into automated trading strategies.",
-    pdfUrl: "#"
+    title: "The Role of Blockchain in Supply Chain Management",
+    summary:
+      "This study explores how blockchain technology enhances transparency and efficiency in supply chain systems. The findings reveal a 25% reduction in fraud and a significant improvement in tracking product origins, benefiting both businesses and consumers.",
+    pdfUrl: "#",
   },
   {
     id: 8,
-    title: "Renewable Energy Integration",
-    summary: "A comprehensive study on integrating renewable energy sources into existing power grids, showing a 50% reduction in integration costs through smart grid technologies.",
-    pdfUrl: "#"
+    title: "The Future of Renewable Energy Technologies",
+    summary:
+      "This paper investigates cutting-edge advancements in renewable energy, such as perovskite solar cells and offshore wind farms. The study highlights how these technologies can meet increasing energy demands while significantly reducing carbon footprints.",
+    pdfUrl: "#",
   },
-  {
-    id: 9,
-    title: "Cybersecurity in IoT Devices",
-    summary: "Research highlighting new encryption methods that reduced security vulnerabilities in IoT devices by 80% while maintaining performance.",
-    pdfUrl: "#"
-  },
-  {
-    id: 10,
-    title: "Biotechnology in Agriculture",
-    summary: "An analysis of CRISPR gene editing applications in agriculture, demonstrating a 200% increase in crop yield while reducing pesticide use.",
-    pdfUrl: "#"
-  }
 ];
 
 export default function SummaryPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#FFFFFF] to-[#F8F9FF] flex flex-col items-center justify-center px-4 py-4">
-      <div className="text-center w-full max-w-3xl mx-auto">
-        <h1 className="text-[#2563EB] text-4xl font-bold mb-3">Research Paper Summaries</h1>
+    <main className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
+      <div className="w-full max-w-7xl px-6">
+        <h1 className="text-3xl font-bold text-center text-blue-700 mb-8">
+          Summarized Research Papers
+        </h1>
         <div className="space-y-6">
           {dummyResearchData.map((paper) => (
             <PaperCard
