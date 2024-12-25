@@ -50,13 +50,6 @@ const dummyResearchData = [
       "This study explores how blockchain technology enhances transparency and efficiency in supply chain systems. The findings reveal a 25% reduction in fraud and a significant improvement in tracking product origins, benefiting both businesses and consumers.",
     pdfUrl: "#",
   },
-  {
-    id: 8,
-    title: "The Future of Renewable Energy Technologies",
-    summary:
-      "This paper investigates cutting-edge advancements in renewable energy, such as perovskite solar cells and offshore wind farms. The study highlights how these technologies can meet increasing energy demands while significantly reducing carbon footprints.",
-    pdfUrl: "#",
-  },
 ];
 
 export default function SummaryPage() {
