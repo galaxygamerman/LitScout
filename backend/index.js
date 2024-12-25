@@ -1,5 +1,6 @@
 const express = require('express')
 const { URLSearchParams } = require('url')
+const {bartSum} = require('./bartsum.js')
 require('dotenv').config()
 const {parseStringPromise} = require('xml2js')
 const port = process.env.port
@@ -8,6 +9,11 @@ app.use(express.json())
 
 app.get('/',(req,res)=>{
 return res.send("LitScout API is running.....")
+})
+app.post('/summarize',async(req,res)=>{
+    const {text}=req.body
+    const rs=await bartSum(text)
+    return res.status(200).json({summary: rs})
 })
 app.get('/search',async(req,res)=>{
     try{
