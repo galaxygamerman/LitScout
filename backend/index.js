@@ -1,6 +1,7 @@
 const express = require('express')
 const { URLSearchParams } = require('url')
-const {bartSum} = require('./bartsum.js')
+const {bartSum, summarizeText} = require('./bartsum.js')
+const {LSSum} = require('./gnlp.js')
 require('dotenv').config()
 const {parseStringPromise} = require('xml2js')
 const port = process.env.port
@@ -10,11 +11,55 @@ app.use(express.json())
 app.get('/',(req,res)=>{
 return res.send("LitScout API is running.....")
 })
-// app.post('/summarize',async(req,res)=>{
-//     const {text}=req.body
-//     const rs=await bartSum(text)
-//     return res.status(200).json({summary: rs})
-// })
+app.post('/summarize',async(req,res)=>{
+    const {text}=req.body
+    const rs=await summarizeText(text)
+    return res.status(200).json({summary: rs})
+})
+app.post('/scout',async(req,res)=>{
+    try{
+    var {key,max_res}=req.body
+    if(!key) return res.status(400).json({error: "Please provide a search key"})
+    key=key.split(" ").join("%20")
+    if(!max_res) max_res=50
+    const baseUrl=`${process.env.BHOST}/search?key=${key}&maxres=${max_res}`
+    console.log(baseUrl)
+    const rs= await fetch(baseUrl,{
+        headers:{
+           "Content-Type": "application/json"
+        }
+    })
+    const rj = await rs.json();
+    const flist=[]
+    for(p of rj){
+        if(!p.pdf_link) continue;
+        const sumtext=await bartSum(p.pdf_link)
+        console.log(sumtext)
+        flist.push({
+            oglink: p.pdf_link,
+            summary: sumtext,
+            title: p.title,
+            author: p.author
+        })
+        // break;
+    }
+    return res.status(200).json({
+        // og:rj,
+        res: flist
+    })
+}
+catch(err){
+    console.log(err)
+    return res.status(500).json({error: err.stack})
+}
+}
+)
+const getpdf=(lst)=>{
+    for( l of lst){
+        if(l.$.type=="application/pdf")return l.$.href;
+    }
+    return undefined
+}
 app.get('/search',async(req,res)=>{
     try{
     const key=req.query.key
@@ -27,12 +72,13 @@ app.get('/search',async(req,res)=>{
         plist.push({
             res_no: plist.length+1,
             link:p.id,
-            pdf_link: p.link[1].$.href,
+            pdf_link: getpdf(p.link),
             title:p.title,
             published: p.published,
             author: p.author.name,
             short_sum: p.summary,
         })
+        // break;
     }
     return res.status(200).json([...plist,...plosP,...cp])
     }
@@ -57,7 +103,7 @@ const getPapers=async(key,max=10)=>{
     const res = await fetch(baseUrl+ new URLSearchParams(params).toString())
     const restext= await res.text();
     const data = await parseStringPromise(restext, { explicitArray: false });
-    const entries = data.feed.entry;
+    const entries = data.feed.entry||[];
     return entries
 }
 const corePapers=async(key,st=0,limit)=>{
@@ -81,7 +127,7 @@ const corePapers=async(key,st=0,limit)=>{
             title:p.title,
             published: p.publishedDate,
             author: p.authors[0].name||"",
-            short_sum: p.abstract||p.fullText.substring(100),
+            short_sum: p.abstract||p.fullText.substring(0,100),
         })
         // break;
     }

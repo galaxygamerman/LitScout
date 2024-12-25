@@ -7,9 +7,10 @@ const downloadPdf = async (url) => {
     const response = await fetch(url);
     if (response.ok) {
         const buffer = await response.arrayBuffer();
-        fs.writeFileSync('temp.pdf', Buffer.from(buffer));
+        const fpath='temp/temp.pdf'
+        fs.writeFileSync(fpath, Buffer.from(buffer));
         console.log('PDF downloaded');
-        return 'temp.pdf';
+        return fpath;
     } else {
         throw new Error("Failed to download PDF");
     }
@@ -24,22 +25,30 @@ const extractTextFromPdf = async (pdfPath) => {
 }
 
 // Function to actually do the summarizing
+const findabs=(text)=>{
+    var ap=text.search('Abstract')
+    if(ap==-1){text.search('abstract');console.log("FOUND")} 
+    if(ap==-1){text.search('Introduction');console.log("FOUND")}
+    if(ap==-1){text.search('introduction');console.log("FOUND")}
+    return (ap==-1)? 300:ap;
+}
 const summarizeText = async (text) => {
+    const pos=findabs(text)
     const res = await fetch(process.env.bartAPI, {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.bartKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputs: text }),
+        body: JSON.stringify({ inputs: text.substring(pos,pos+200).replace("\n"," ") }),
     })
     const rs=await res.json()
+    console.log(rs)
     return rs[0].summary_text
 }
 
-// The main function
 const bartSum = async (url) => {
     try {
         const pdfPath = await downloadPdf(url);
         const text = await extractTextFromPdf(pdfPath);
-        fs.writeFileSync('dump.txt', text)  // Only for testing
+        fs.writeFileSync('temp/dump.txt', text)  // Only for testing
         const summary = await summarizeText(text);
         return summary;
     } catch (error) {
@@ -48,5 +57,5 @@ const bartSum = async (url) => {
 }
 
 module.exports={
-    bartSum
+    bartSum,summarizeText
 }
