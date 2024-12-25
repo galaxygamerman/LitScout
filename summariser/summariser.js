@@ -46,6 +46,7 @@ async function summarizeText(text) {
 	try {
 		const pdfPath = await downloadPdf(pdfLink);
 		const text = await extractTextFromPdf(pdfPath);
+		fs.writeFileSync('dump.txt', text)	// Only for testing
 		const summary = await summarizeText(text);
 		console.log("Summarized Text:");
 		console.log(summary);
