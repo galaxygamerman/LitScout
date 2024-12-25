@@ -2,11 +2,15 @@ const express = require('express')
 const { URLSearchParams } = require('url')
 const {bartSum, summarizeText} = require('./bartsum.js')
 const {LSSum} = require('./gnlp.js')
+const cors = require('cors')
 require('dotenv').config()
 const {parseStringPromise} = require('xml2js')
 const port = process.env.port
 const app=express()
 app.use(express.json())
+app.use(cors({
+    origin: '*'
+}))
 
 app.get('/',(req,res)=>{
 return res.send("LitScout API is running.....")
@@ -21,7 +25,7 @@ app.post('/scout',async(req,res)=>{
     var {key,max_res}=req.body
     if(!key) return res.status(400).json({error: "Please provide a search key"})
     key=key.split(" ").join("%20")
-    if(!max_res) max_res=50
+    if(!max_res) max_res=10
     const baseUrl=`${process.env.BHOST}/search?key=${key}&maxres=${max_res}`
     console.log(baseUrl)
     const rs= await fetch(baseUrl,{
@@ -33,10 +37,12 @@ app.post('/scout',async(req,res)=>{
     const flist=[]
     for(p of rj){
         if(!p.pdf_link) continue;
-        const sumtext=await bartSum(p.pdf_link)
+        // const sumtext=await LSSum(p.short_sum)
+        const sumtext = await bartSum(p.pdf_link)
         console.log(sumtext)
         flist.push({
-            oglink: p.pdf_link,
+            id: flist.length+1,
+            pdfUrl: p.pdf_link,
             summary: sumtext,
             title: p.title,
             author: p.author
@@ -44,7 +50,7 @@ app.post('/scout',async(req,res)=>{
         // break;
     }
     return res.status(200).json({
-        // og:rj,
+        success: flist.length>0,
         res: flist
     })
 }
@@ -63,11 +69,12 @@ const getpdf=(lst)=>{
 app.get('/search',async(req,res)=>{
     try{
     const key=req.query.key
-    const max_res=req.query.maxres || 50
-    const rs= await getPapers(key,(max_res-8>0)? (max_res-8)/2: max_res)
+    const max_res=req.query.maxres || 20
+    const rs= await getPapers(key,(max_res-8>2)? (max_res-8)/2: max_res)
     const plosP = await plosPapers(key,rs.length)
-    const cp= await corePapers(key,rs.length+plosP.length,(max_res-8>0)? (max_res-8)/2: max_res)
+    const cp= await corePapers(key,rs.length+plosP.length,(max_res-8>2)? (max_res-8)/2: max_res)
     plist=[]
+    if(rs[0])
     for(p of rs){
         plist.push({
             res_no: plist.length+1,
@@ -118,6 +125,7 @@ const corePapers=async(key,st=0,limit)=>{
     })
     const rj= await res.json();
     const plist=[]
+    if(!rj.results) return []
     for(p of rj.results){
         if(!(p.authors && p.authors[0])) continue;
         plist.push({
@@ -147,7 +155,7 @@ const plosPapers=async(key,st=0)=>{
             // pdf_link: p.link[1].$.href || "-",
             title:p.title_display,
             published: p.publication_date,
-            author: p.author_display[0]||"_",
+            author: (p.author_display)?p.author_display[0]:"",
             short_sum: p.abstract,
         })
     }

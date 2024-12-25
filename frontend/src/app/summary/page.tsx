@@ -1,6 +1,8 @@
+'use client'
 import PaperCard from "@/components/PaperCard";
-
-const dummyResearchData = [
+import { useEffect,useState } from "react";
+import LoadingScreen from "./loading"
+var papers = [
   {
     id: 1,
     title: "Quantum Computing: A New Era of Computational Power",
@@ -51,8 +53,38 @@ const dummyResearchData = [
     pdfUrl: "#",
   },
 ];
-
 export default function SummaryPage() {
+  const [loading,setLoading] = useState(true)
+  useEffect(() => {
+    const getPapers = async () => {
+        try {
+          const key = new URLSearchParams(window.location.search).get('key');
+           console.log("You are viewing: "+key)
+           const res= await fetch(`${process.env.NEXT_PUBLIC_BHOST}/scout/`,{
+            method: 'POST',
+            headers:{
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              key: key,
+              max_res: 5
+            })
+           })
+           const rj = await res.json()
+           if(rj.success){
+            setLoading(false)
+            papers=rj.res
+
+           }
+           console.log(rj)
+        } catch (error) {
+            
+    }
+  }
+    getPapers(); 
+  
+  }, []);
+  if(loading) return <LoadingScreen/>
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
       <div className="w-full max-w-7xl px-6">
@@ -60,7 +92,7 @@ export default function SummaryPage() {
           Summarized Research Papers
         </h1>
         <div className="space-y-6">
-          {dummyResearchData.map((paper) => (
+          {papers.map((paper) => (
             <PaperCard
               key={paper.id}
               title={paper.title}
