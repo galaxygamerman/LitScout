@@ -1,13 +1,13 @@
 // Import required libraries
-const axios = require('axios');
 const fs = require('fs');
 const pdf = require('pdf-parse');
 
 // Function to download PDF from a URL
 async function downloadPdf(url) {
-	const response = await axios.get(url, { responseType: 'arraybuffer' });
-	if (response.status === 200) {
-		fs.writeFileSync('temp.pdf', response.data);
+	const response = await fetch(url);
+	if (response.ok) {
+		const buffer = await response.arrayBuffer();
+		fs.writeFileSync('temp.pdf', Buffer.from(buffer));
 		console.log('PDF downloaded');
 		return 'temp.pdf';
 	} else {
