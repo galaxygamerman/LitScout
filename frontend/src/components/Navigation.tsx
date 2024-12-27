@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import LoginModal from './LoginModal';
-
+import { usePathname } from "next/navigation";
 export default function Navigation() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,20 +14,21 @@ export default function Navigation() {
     setUsername(userData.username);
     setIsLoginOpen(false);
   };
-
+  const pathname = usePathname();
+  const lflag = pathname== "/login";
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUsername('');
   };
 
   return (
-    <nav className="w-full py-4 px-6 border-b border-gray-100 bg-white">
+    <nav className={`w-full py-4 px-6 border-b border-gray-100 bg-white ${(lflag? 'fixed':'')}`}>
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <Link href="/" className="flex items-center space-x-2">
           <span className="text-blue-600 text-xl font-semibold">LitScout</span>
         </Link>
         
-        <div className="flex items-center space-x-6">
+        {/* <div className="flex items-center space-x-6">
           {isLoggedIn ? (
             <>
               <span className="text-gray-600">Welcome, {username}</span>
@@ -46,13 +47,13 @@ export default function Navigation() {
               Login
             </button>
           )}
-        </div>
+        </div> */}
       </div>
-      <LoginModal 
+      {/* <LoginModal 
         isOpen={isLoginOpen} 
         onClose={() => setIsLoginOpen(false)}
         onLogin={handleLogin}
-      />
+      /> */}
     </nav>
   );
 }

@@ -2,16 +2,26 @@ const express = require('express')
 const { URLSearchParams } = require('url')
 const {bartSum, summarizeText} = require('./bartsum.js')
 const {LSSum} = require('./gnlp.js')
+const mongoose = require('mongoose');
 const cors = require('cors')
+const cookieParser=require('cookie-parser');
 require('dotenv').config()
+const jwt=require('jsonwebtoken');
+const bcrypt=require('bcryptjs')
+const User=require('./models/user')
 const {parseStringPromise} = require('xml2js')
 const port = process.env.port
 const app=express()
 app.use(express.json())
+app.use(cookieParser())
 app.use(cors({
-    origin: '*'
+    origin: 'http://localhost:3000',
+    credentials: true,
+    httpOnly: true
 }))
-
+mongoose.connect(process.env.mongoUri)
+    .then(() => console.log('Connected to MongoDB cluster'))
+    .catch(err => console.error('Could not connect to MongoDB cluster', err));
 app.get('/',(req,res)=>{
 return res.send("LitScout API is running.....")
 })
@@ -37,13 +47,19 @@ app.post('/scout',async(req,res)=>{
     const flist=[]
     for(p of rj){
         if(!p.pdf_link) continue;
-        // const sumtext=await LSSum(p.short_sum)
-        const sumtext = await bartSum(p.pdf_link)
+        const sumtext=await LSSum(p.short_sum)
+        // const sumtext = await bartSum(p.pdf_link)
         console.log(sumtext)
         flist.push({
             id: flist.length+1,
             pdfUrl: p.pdf_link,
+            source: p.source,
             summary: sumtext,
+            date:new Date(p.published).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              }).replace(',', ''),
             title: p.title,
             author: p.author
         })
@@ -54,9 +70,9 @@ app.post('/scout',async(req,res)=>{
         res: flist
     })
 }
-catch(err){
-    console.log(err)
-    return res.status(500).json({error: err.stack})
+catch(error){
+    console.log(error)
+    return res.status(500).json({error: error.stack})
 }
 }
 )
@@ -80,6 +96,7 @@ app.get('/search',async(req,res)=>{
             res_no: plist.length+1,
             link:p.id,
             pdf_link: getpdf(p.link),
+            source: 'ARXIV',
             title:p.title,
             published: p.published,
             author: p.author.name,
@@ -131,6 +148,7 @@ const corePapers=async(key,st=0,limit)=>{
         plist.push({
             res_no: plist.length+1+st,
             link:p.urls[0],
+            source: "CORE",
             pdf_link: p.downloadUrl||p.links[0].url,
             title:p.title,
             published: p.publishedDate,
@@ -154,6 +172,7 @@ const plosPapers=async(key,st=0)=>{
             score:p.score,
             // pdf_link: p.link[1].$.href || "-",
             title:p.title_display,
+            source: "PLOS",
             published: p.publication_date,
             author: (p.author_display)?p.author_display[0]:"",
             short_sum: p.abstract,
@@ -161,3 +180,91 @@ const plosPapers=async(key,st=0)=>{
     }
     return plist
 }
+const JWT_SECRET =process.env.JWT_SECRET;
+
+app.post('/register',async(req,res)=>{
+    try{
+    const {username,password}=req.body
+    let exuser=await User.findOne({username: username})
+    if(exuser) return res.status(400).json({msg: `User ${username} already exists in the database. Please Login`})
+    const hashedPass = await bcrypt.hash(password,10)
+    exuser= new User({
+        username: username,password:hashedPass
+    })
+    await exuser.save()
+    const token = jwt.sign({username},JWT_SECRET,{expiresIn:"2h"})
+    res.cookie('token', token, {
+            httpOnly: true,
+            expires: false,
+            maxAge: 48*60*60*1000
+          });
+    return res.status(200).json({
+        success: true,
+        message: `User ${username} was added successfully`
+    })
+    }
+    catch(error){
+        res.status(500).json({message:"Error Occured: ",err:error.stack})
+    }
+})
+app.post('/login',async(req,res)=>{
+    try{
+    const {username,password}=req.body
+    const user=await User.findOne({username: username})
+    if(!user) return res.status(400).json({success:false,message: `User ${username} doesn't exist in the database. Please Register`})
+    const cpass= await bcrypt.compare(password,user.password)
+    if(!cpass) return res.status(500).json({success:false, message:"Invalid credentials"})
+        const token = jwt.sign({username},JWT_SECRET,{expiresIn:"2h"})
+    res.cookie('token', token, {
+            httpOnly: true,
+            expires: false,
+            maxAge: 48*60*60*1000
+          });
+    return res.status(200).json({
+        success: true,
+        message: `User ${username} has logged in`
+    })
+    }
+    catch(error){
+
+    }
+})
+
+const isLoggedIn=(req,res,next)=>{
+    const token=req.cookies?.token
+    // console.log(req.cookies?.token)
+    if(!token) return res.status(404).json({success:false,message:"Error. Token missing"})
+    try{
+        const dec=jwt.verify(token,JWT_SECRET)
+        req.user=dec
+        next()
+    }
+    catch(error){console.log(error);return res.status(500).json({success: false,message: "access denied"})}
+}
+
+app.get('/prot',isLoggedIn,(req,res)=>{
+    return res.send(`Welcome, ${req.user.username}This is a protected route`)
+},)
+
+// app.get('/testlog',async(req,res)=>{
+//     const rs = await fetch('http://localhost:8080/login',{
+//         method:"POST",
+//         headers:{
+//             "Content-Type": "application/json",
+//         },
+//         credentials: "include",
+//         body:JSON.stringify({username:'tet',password: 'tet' })
+//     })
+//     const rj= await rs.json();
+//     console.log(rs);
+//     res.json(rs)
+// })
+
+app.get('/logout',(req,res)=>{
+    res.clearCookie('token', { httpOnly: true, path: '/' });
+    return res.status(200).json({msg: "Logged out successfully"})
+})
+
+app.get('/check_reg',isLoggedIn,(req,res)=>{
+return res.status(200).json({success:true,message: "Logged in",user:req.user})
+})

@@ -2,6 +2,7 @@
 import PaperCard from "@/components/PaperCard";
 import { useEffect,useState } from "react";
 import LoadingScreen from "./loading"
+import { useRouter } from "next/navigation";
 var papers = [
     {
       id: 1,
@@ -69,7 +70,27 @@ var papers = [
   ];
 export default function SummaryPage() {
   const [loading,setLoading] = useState(true)
+  const [load,setLoad] = useState(true)
+  const router= useRouter()
   useEffect(() => {
+    const checkReg=async()=>{
+      try{
+      const res=await fetch(`${process.env.NEXT_PUBLIC_BHOST}/check_reg`,{
+          credentials: "include"
+      })
+      const rd=await res.json();
+      if(rd.success){
+          setLoad(false)
+      }
+      else{
+          router.push('/login')
+      }
+  }
+  catch(error){
+      router.push('/login')
+  }
+  } 
+  checkReg();
     const getPapers = async () => {
         try {
           const key = new URLSearchParams(window.location.search).get('key');
@@ -95,9 +116,10 @@ export default function SummaryPage() {
             
     }
   }
-    getPapers(); 
+    getPapers();
   
   }, []);
+  if(load) return <></>
   if(loading) return <LoadingScreen/>
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
